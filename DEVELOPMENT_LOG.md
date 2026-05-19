@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Commit Chunk 5 smoke-test fixes; then Chunk 6 — `terrain_features.py`.
-- **Current System State:** Chunks 0–5 on `main` (commit `9931916`). Local fix: normalize pygridmet column names + `pyarrow` in requirements. Smoke test `--limit 10` → 10 rows × 40 feature columns. 16 unit tests passing.
+- **Current Goal:** Commit + push Chunk 6 (`terrain_features.py`); user smoke-tests patch mode, optional mosaic for full run.
+- **Current System State:** Chunks 0–5 on `main` (`1caaf6f`). Chunk 6 implemented locally: `terrain_features.py`, 21 tests passing. Patch smoke `--limit 2` → valid elevation/slope/aspect columns.
 
 ## 2. Comprehensive Implementation History
 
@@ -101,6 +101,14 @@
   - Parquet had only `OBJECTID` — pygridmet returns columns like `tmmx (K)`; code expected `tmmx`. Fixed with `_normalize_gridmet_weather()`.
 - **Lessons Learned:** Do not put `#` comments on the same line as pip commands in copy-paste blocks.
 
+### [Attempt #12: Chunk 6 terrain_features.py]
+
+- **Strategy:** `TerrainFeatureExtractor` with mosaic mode (cached CA DEM via `py3dep.get_dem`, local central-difference slope/aspect) and patch mode (per-fire `get_map` with DEM + slope + aspect layers for smoke tests). Resume parquet checkpoint; mocked tests without py3dep at import.
+- **Location:** `src/features/terrain_features.py`, `tests/test_terrain_features.py`
+- **Result:** SUCCESS (21 tests pass; patch smoke 2 fires)
+- **Failure Analysis:** N/A in dev; full CA mosaic download at 10 m is large — use `--mode patch` for smoke, mosaic for batch after one-time DEM cache.
+- **Lessons Learned:** py3dep `get_map` returns `elevation`, `slope_degrees`, `aspect_degrees`; treat 255/32767 as nodata. Use `geo_crs=4326`, `crs=EPSG:5070`.
+
 ## 3. Blocked Roads & Forbidden Patches
 
 - Do not implement multiple chunks in one session without per-chunk commits.
@@ -123,9 +131,10 @@
 - [x] `src/data/validate_data.py`
 - [x] `src/features/weather_features.py` (commit `9931916` on `main`)
 - [x] Smoke: `python src/features/weather_features.py --limit 10` (after pygridmet + pyarrow + column fix)
-- [ ] Commit + push: column normalization + `pyarrow` in requirements
+- [x] Commit + push Chunk 5 fixes (`1caaf6f`)
 - [ ] Full weather run: 3,722 fires with `--resume` (optional, slow)
-- [ ] Chunk 6: `terrain_features.py`
+- [x] Chunk 6: `terrain_features.py` + tests (pending commit + push)
+- [ ] Smoke: `python src/features/terrain_features.py --mode patch --limit 10`
 - [ ] Chunk 7: spatial features
 - [ ] Chunk 8: Sentinel-2 vegetation
 - [ ] Chunks 9–14: build_features, ML, export, viz, docs
