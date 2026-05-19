@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Chunk 3+ — `validate_data.py`, then feature engineering (weather, terrain, spatial).
-- **Current System State:** GitHub synced (3 commits). Logger + CAL FIRE downloader fixed for live API; 6 unit tests passing. Re-run live download after pulling latest fix.
+- **Current Goal:** Feature engineering — `weather_features.py`, then terrain and spatial features.
+- **Current System State:** 3,722 validated fires with centroids in `data/interim/fires_with_centroids.gpkg`. 12 unit tests passing. Raw download: 3,768 fires (2000–2024) in `data/raw/calfire_perimeters.gpkg`.
 
 ## 2. Comprehensive Implementation History
 
@@ -57,6 +57,22 @@
 - **Failure Analysis:** `400 Bad Request` — wrong FeatureServer URL (`jUJYIo9rS62FWOcc` / `California_Fire_Perimeters_All`). Correct public endpoint from data.ca.gov: `jUJYIo9tSA7EHvfZ` / `California_Historic_Fire_Perimeters`. `C_METHOD` is integer-coded (1=GPS Ground, 4=Other Imagery), not strings `GPS`/`IMAGERY`.
 - **Lessons Learned:** Use OID pagination (`OBJECTID > last`) for GeoJSON; ~8371 fires for 2000–2024.
 
+### [Attempt #7: Live download success]
+
+- **Strategy:** Re-run downloader with fixed ArcGIS endpoint.
+- **Location:** `data/raw/calfire_perimeters.gpkg`
+- **Result:** SUCCESS — 8371 downloaded, 3768 after quality filter.
+- **Failure Analysis:** N/A
+- **Lessons Learned:** ~84MB GeoPackage; not tracked in git.
+
+### [Attempt #8: validate_data.py]
+
+- **Strategy:** Per-record checks (geometry, dates, acres, CA bounds); add `centroid_lon/lat`; write interim GPKG.
+- **Location:** `src/data/validate_data.py`, `tests/test_validate_data.py`
+- **Result:** SUCCESS — 3768 → 3722 valid (1.2% removed); exclusions mostly missing/invalid containment dates.
+- **Failure Analysis:** N/A
+- **Lessons Learned:** Compute centroids in EPSG:5070 then convert to WGS84. ArcGIS dates are epoch milliseconds (float).
+
 ## 3. Blocked Roads & Forbidden Patches
 
 - Do not use old URL `jUJYIo9rS62FWOcc/.../California_Fire_Perimeters_All` (returns 400).
@@ -73,7 +89,8 @@
 - [x] `src/utils/logger.py` + tests
 - [x] `src/utils/config_loader.py`
 - [x] `src/data/download_calfire.py` + tests
-- [ ] Live run: `python src/data/download_calfire.py --min-year 2000 --max-year 2024`
-- [ ] `src/data/validate_data.py`
-- [ ] Weather, terrain, spatial features
+- [x] Live run: `python src/data/download_calfire.py --min-year 2000 --max-year 2024`
+- [x] `src/data/validate_data.py`
+- [ ] `src/features/weather_features.py`
+- [ ] Terrain, spatial features
 - [ ] Model training, export weights, SHAP plots
