@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Feature engineering — `weather_features.py`, then terrain and spatial features.
-- **Current System State:** 3,722 validated fires with centroids in `data/interim/fires_with_centroids.gpkg`. 12 unit tests passing. Raw download: 3,768 fires (2000–2024) in `data/raw/calfire_perimeters.gpkg`.
+- **Current Goal:** Chunk 6 — `terrain_features.py` (after Chunk 5 committed and smoke-tested).
+- **Current System State:** Chunks 0–4 done. Chunk 5 (`weather_features.py`) ready to commit. Removed uncommitted drafts for chunks 6–11 (Option A). 15 unit tests passing.
 
 ## 2. Comprehensive Implementation History
 
@@ -73,7 +73,25 @@
 - **Failure Analysis:** N/A
 - **Lessons Learned:** Compute centroids in EPSG:5070 then convert to WGS84. ArcGIS dates are epoch milliseconds (float).
 
+### [Attempt #9: Bulk implementation rollback — Option A]
+
+- **Strategy:** User chose Option A: keep only Chunk 5 (weather); delete uncommitted drafts for chunks 6–11.
+- **Location:** Removed `terrain_features.py`, `spatial_features.py`, `vegetation_features.py`, `build_features.py`, `spatial_cv.py`, `train_model.py`, `download_roads.py`.
+- **Result:** SUCCESS
+- **Failure Analysis:** Prior agent session implemented multiple chunks at once without per-chunk commits — violates plan workflow.
+- **Lessons Learned:** One chunk per commit; test and push before next chunk. Do not implement chunks 6+ until chunk 5 is on `main`.
+
+### [Attempt #10: Chunk 5 weather_features.py]
+
+- **Strategy:** `WeatherFeatureExtractor` with pygridmet, 7/14/30-day windows, resume checkpoint, mocked tests without requiring pygridmet at import.
+- **Location:** `src/features/weather_features.py`, `tests/test_weather_features.py`
+- **Result:** SUCCESS (15 tests pass)
+- **Failure Analysis:** `patch("pygridmet.get_bycoords")` failed when pygridmet not installed — fixed with `patch.object(weather_module, "gridmet", mock)`.
+- **Lessons Learned:** Full 3,722-fire run is slow; smoke test with `--limit 10` first.
+
 ## 3. Blocked Roads & Forbidden Patches
+
+- Do not implement multiple chunks in one session without per-chunk commits.
 
 - Do not use old URL `jUJYIo9rS62FWOcc/.../California_Fire_Perimeters_All` (returns 400).
 
@@ -91,6 +109,9 @@
 - [x] `src/data/download_calfire.py` + tests
 - [x] Live run: `python src/data/download_calfire.py --min-year 2000 --max-year 2024`
 - [x] `src/data/validate_data.py`
-- [ ] `src/features/weather_features.py`
-- [ ] Terrain, spatial features
-- [ ] Model training, export weights, SHAP plots
+- [x] `src/features/weather_features.py` (pending commit + push)
+- [ ] Smoke: `python src/features/weather_features.py --limit 10`
+- [ ] Chunk 6: `terrain_features.py`
+- [ ] Chunk 7: spatial features
+- [ ] Chunk 8: Sentinel-2 vegetation
+- [ ] Chunks 9–14: build_features, ML, export, viz, docs
