@@ -9,7 +9,10 @@ import pytest
 from shapely.geometry import Point
 
 import src.features.weather_features as weather_module
-from src.features.weather_features import WeatherFeatureExtractor
+from src.features.weather_features import (
+    WeatherFeatureExtractor,
+    _normalize_gridmet_weather,
+)
 
 
 @pytest.fixture
@@ -34,6 +37,19 @@ def sample_weather():
         },
         index=dates,
     )
+
+
+def test_normalize_gridmet_weather_columns():
+    raw = pd.DataFrame(
+        {
+            "tmmx (K)": [300.0, 301.0],
+            "pr (mm)": [0.0, 1.0],
+            "erc (-)": [50.0, 51.0],
+        },
+        index=pd.date_range("2020-07-01", periods=2, freq="D"),
+    )
+    normalized = _normalize_gridmet_weather(raw, ["tmmx", "pr", "erc"])
+    assert list(normalized.columns) == ["tmmx", "pr", "erc"]
 
 
 def test_compute_window_features(extractor, sample_weather):

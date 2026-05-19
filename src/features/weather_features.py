@@ -31,6 +31,19 @@ logger = get_logger(__name__)
 GRIDMET_MIN_DATE = datetime(1979, 1, 1)
 
 
+def _normalize_gridmet_weather(weather: pd.DataFrame, variables: list[str]) -> pd.DataFrame:
+    """
+    Map pygridmet column labels (e.g. 'tmmx (K)') to bare variable names.
+    """
+    rename: dict[str, str] = {}
+    for col in weather.columns:
+        base = col.split("(", 1)[0].strip()
+        if base in variables:
+            rename[col] = base
+    out = weather.rename(columns=rename)
+    return out[[c for c in variables if c in out.columns]]
+
+
 class WeatherFeatureExtractor:
     """
     Extract pre-fire meteorological features from gridMET.
@@ -133,7 +146,7 @@ class WeatherFeatureExtractor:
                     )
                     return None
 
-                return weather
+                return _normalize_gridmet_weather(weather, self.variables)
 
             except Exception as exc:
                 wait_time = 2**attempt

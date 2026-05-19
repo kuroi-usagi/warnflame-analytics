@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Chunk 6 — `terrain_features.py` (after Chunk 5 committed and smoke-tested).
-- **Current System State:** Chunks 0–4 done. Chunk 5 (`weather_features.py`) ready to commit. Removed uncommitted drafts for chunks 6–11 (Option A). 15 unit tests passing.
+- **Current Goal:** Commit Chunk 5 smoke-test fixes; then Chunk 6 — `terrain_features.py`.
+- **Current System State:** Chunks 0–5 on `main` (commit `9931916`). Local fix: normalize pygridmet column names + `pyarrow` in requirements. Smoke test `--limit 10` → 10 rows × 40 feature columns. 16 unit tests passing.
 
 ## 2. Comprehensive Implementation History
 
@@ -89,6 +89,18 @@
 - **Failure Analysis:** `patch("pygridmet.get_bycoords")` failed when pygridmet not installed — fixed with `patch.object(weather_module, "gridmet", mock)`.
 - **Lessons Learned:** Full 3,722-fire run is slow; smoke test with `--limit 10` first.
 
+### [Attempt #11: Chunk 5 smoke test — pip / parquet / column names]
+
+- **Strategy:** Install `pygridmet` and `pyarrow`; run `--limit 10`; fix empty feature columns.
+- **Location:** `src/features/weather_features.py`, `requirements.txt`, `tests/test_weather_features.py`
+- **Result:** SUCCESS (10 fires, 40 columns in `fires_weather_joined.parquet`)
+- **Failure Analysis:**
+  - `pip install pygridmet   # if not installed` — shell treats `#` as package name; run `pip install pygridmet` on its own line.
+  - `ImportError: pygridmet` — install never ran due to pip error above.
+  - `ImportError` on `to_parquet` — missing `pyarrow`.
+  - Parquet had only `OBJECTID` — pygridmet returns columns like `tmmx (K)`; code expected `tmmx`. Fixed with `_normalize_gridmet_weather()`.
+- **Lessons Learned:** Do not put `#` comments on the same line as pip commands in copy-paste blocks.
+
 ## 3. Blocked Roads & Forbidden Patches
 
 - Do not implement multiple chunks in one session without per-chunk commits.
@@ -109,8 +121,10 @@
 - [x] `src/data/download_calfire.py` + tests
 - [x] Live run: `python src/data/download_calfire.py --min-year 2000 --max-year 2024`
 - [x] `src/data/validate_data.py`
-- [x] `src/features/weather_features.py` (pending commit + push)
-- [ ] Smoke: `python src/features/weather_features.py --limit 10`
+- [x] `src/features/weather_features.py` (commit `9931916` on `main`)
+- [x] Smoke: `python src/features/weather_features.py --limit 10` (after pygridmet + pyarrow + column fix)
+- [ ] Commit + push: column normalization + `pyarrow` in requirements
+- [ ] Full weather run: 3,722 fires with `--resume` (optional, slow)
 - [ ] Chunk 6: `terrain_features.py`
 - [ ] Chunk 7: spatial features
 - [ ] Chunk 8: Sentinel-2 vegetation
