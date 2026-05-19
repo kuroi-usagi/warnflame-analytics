@@ -1,0 +1,38 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Data & caches (per spec: data/raw is immutable but too large for git)
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+cache/
+*.duckdb
+logs/
+
+# Models & reports (regenerated; optional: track only risk_weights.json later)
+models/*.pkl
+reports/figures/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store

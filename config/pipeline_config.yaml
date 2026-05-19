@@ -1,0 +1,78 @@
+# Central configuration for warnflame-analytics pipeline
+
+data:
+  calfire:
+    min_year: 2000
+    max_year: 2024
+    min_acres: 10.0
+    max_acres: 1000000.0
+    required_methods: ['GPS', 'IMAGERY']
+
+  gridmet:
+    variables: ['tmmx', 'tmmn', 'pr', 'vs', 'erc', 'bi']
+    windows: [7, 14, 30]
+    cache_expire_days: 30
+
+  dem:
+    resolution: 10
+    crs: 'EPSG:5070'
+
+  sentinel2:
+    enabled: false
+    cloud_threshold: 20
+    resolution: 30
+
+features:
+  spatial:
+    n_clusters: 10
+    min_distance_km: 50
+
+  weather:
+    aggregations: ['max', 'mean', 'sum']
+    required_completeness: 0.9
+
+  terrain:
+    slope_method: 'central_differences'
+    aspect_method: 'compass'
+
+model:
+  random_forest:
+    n_estimators: 100
+    max_depth: 20
+    min_samples_split: 50
+    min_samples_leaf: 20
+    max_features: 'sqrt'
+    class_weight: 'balanced'
+    random_state: 42
+    n_jobs: -1
+
+  cross_validation:
+    n_folds: 5
+    scoring: 'roc_auc'
+    shuffle: true
+
+  hyperparameter_tuning:
+    enabled: false
+    n_iter: 20
+    cv_folds: 3
+
+visualization:
+  shap:
+    n_samples: 1000
+    top_features: 5
+
+  plots:
+    dpi: 300
+    format: 'png'
+    figsize: [10, 8]
+
+output:
+  model_dir: 'models'
+  figures_dir: 'reports/figures'
+  risk_weights_path: 'models/risk_weights.json'
+  cv_results_path: 'models/spatial_cv_results.json'
+
+logging:
+  level: 'INFO'
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file: 'logs/pipeline.log'
