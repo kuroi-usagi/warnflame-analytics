@@ -17,6 +17,11 @@ data:
     resolution: 10
     crs: 'EPSG:5070'
 
+  roads:
+    path: 'data/raw/california_roads.gpkg'
+    tiger_url: 'https://www2.census.gov/geo/tiger/TIGER2024/PRISECROADS/tl_2024_06_prisecroads.zip'
+    crs: 'EPSG:5070'
+
   sentinel2:
     enabled: false
     cloud_threshold: 20

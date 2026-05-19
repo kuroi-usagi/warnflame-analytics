@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Commit + push Chunk 6 (`terrain_features.py`); user smoke-tests patch mode, optional mosaic for full run.
-- **Current System State:** Chunks 0–5 on `main` (`1caaf6f`). Chunk 6 implemented locally: `terrain_features.py`, 21 tests passing. Patch smoke `--limit 2` → valid elevation/slope/aspect columns.
+- **Current Goal:** Commit + push Chunk 7 (`spatial_features.py`, `download_roads.py`); user downloads roads + smoke test.
+- **Current System State:** Chunks 0–6 on `main` (`d7b0602`). Chunk 7 implemented locally: road distance via `gpd.sjoin_nearest`, 25 tests passing.
 
 ## 2. Comprehensive Implementation History
 
@@ -109,6 +109,15 @@
 - **Failure Analysis:** N/A in dev; full CA mosaic download at 10 m is large — use `--mode patch` for smoke, mosaic for batch after one-time DEM cache.
 - **Lessons Learned:** py3dep `get_map` returns `elevation`, `slope_degrees`, `aspect_degrees`; treat 255/32767 as nodata. Use `geo_crs=4326`, `crs=EPSG:5070`.
 
+### [Attempt #13: Chunk 7 spatial_features + download_roads]
+
+- **Strategy:** TIGER/Line CA primary roads download; `SpatialFeatureExtractor` with batched `gpd.sjoin_nearest` for segment-accurate `infrastructure_distance_km`; resume parquet; mocked ZIP download test.
+- **Location:** `src/data/download_roads.py`, `src/features/spatial_features.py`, `tests/test_download_roads.py`, `tests/test_spatial_features.py`, `config/pipeline_config.yaml`
+- **Result:** SUCCESS (25 tests pass)
+- **Failure Analysis:** N/A
+- **Lessons Learned:** Prefer `sjoin_nearest` over midpoint KD-tree for road distance. Download roads once before spatial extract.
+- **Failure Analysis (roads download):** `TIGER2023/PRIMARYROADS/...` returns 404 — correct path is `PRISECROADS` (e.g. `TIGER2024/PRISECROADS/tl_2024_06_prisecroads.zip`).
+
 ## 3. Blocked Roads & Forbidden Patches
 
 - Do not implement multiple chunks in one session without per-chunk commits.
@@ -133,8 +142,9 @@
 - [x] Smoke: `python src/features/weather_features.py --limit 10` (after pygridmet + pyarrow + column fix)
 - [x] Commit + push Chunk 5 fixes (`1caaf6f`)
 - [ ] Full weather run: 3,722 fires with `--resume` (optional, slow)
-- [x] Chunk 6: `terrain_features.py` + tests (pending commit + push)
-- [ ] Smoke: `python src/features/terrain_features.py --mode patch --limit 10`
-- [ ] Chunk 7: spatial features
+- [x] Chunk 6: `terrain_features.py` on `main` (`d7b0602`)
+- [x] Chunk 7: `spatial_features.py` + `download_roads.py` + tests (pending commit + push)
+- [ ] Download roads: `python src/data/download_roads.py`
+- [ ] Smoke: `python src/features/spatial_features.py --limit 10`
 - [ ] Chunk 8: Sentinel-2 vegetation
 - [ ] Chunks 9–14: build_features, ML, export, viz, docs
