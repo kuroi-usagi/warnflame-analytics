@@ -17,7 +17,7 @@ SAMPLE_GEOJSON = """{
         "OBJECTID": 1,
         "YEAR_": 2020,
         "GIS_ACRES": 150.0,
-        "C_METHOD": "GPS"
+        "C_METHOD": 1
       },
       "geometry": {
         "type": "Polygon",
@@ -30,7 +30,7 @@ SAMPLE_GEOJSON = """{
         "OBJECTID": 2,
         "YEAR_": 1990,
         "GIS_ACRES": 5.0,
-        "C_METHOD": "DIGITIZE"
+        "C_METHOD": 6
       },
       "geometry": {
         "type": "Polygon",
@@ -75,6 +75,7 @@ def test_download_fires_saves_geopackage(
     empty.text = '{"type":"FeatureCollection","features":[]}'
     empty.raise_for_status = MagicMock()
 
+    # First page returns data; second page (OBJECTID pagination) is empty
     mock_get.side_effect = [mock_geojson_response, empty]
 
     fires = downloader.download_fires(output_filename="test_fires.gpkg")
@@ -93,7 +94,7 @@ def test_filter_by_quality(downloader):
             "OBJECTID": [1, 2, 3],
             "YEAR_": [2020, 2019, 2018],
             "GIS_ACRES": [150.0, 5.0, 50.0],
-            "C_METHOD": ["GPS", "DIGITIZE", "IMAGERY"],
+            "C_METHOD": [1, 6, 4],  # GPS Ground, Hand Drawn, Other Imagery
             "geometry": [
                 Polygon([(-121, 38), (-120.9, 38), (-120.9, 38.1), (-121, 38.1)]),
                 Polygon([(-122, 37), (-121.9, 37), (-121.9, 37.1), (-122, 37.1)]),
@@ -106,7 +107,7 @@ def test_filter_by_quality(downloader):
     filtered = downloader.filter_by_quality(fires)
 
     assert len(filtered) == 2
-    assert set(filtered["C_METHOD"]) == {"GPS", "IMAGERY"}
+    assert set(filtered["C_METHOD"]) == {1, 4}
     assert all(filtered["GIS_ACRES"] >= 10.0)
 
 

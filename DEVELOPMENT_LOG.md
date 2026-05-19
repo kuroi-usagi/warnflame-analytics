@@ -3,7 +3,7 @@
 ## 1. Active Objective & Current State
 
 - **Current Goal:** Chunk 3+ — `validate_data.py`, then feature engineering (weather, terrain, spatial).
-- **Current System State:** Phase 0 complete; GitHub remote `git@github-tina:kuroi-usagi/warnflame-analytics.git` pushed. Logger and CAL FIRE downloader implemented; all 6 unit tests passing.
+- **Current System State:** GitHub synced (3 commits). Logger + CAL FIRE downloader fixed for live API; 6 unit tests passing. Re-run live download after pulling latest fix.
 
 ## 2. Comprehensive Implementation History
 
@@ -49,7 +49,17 @@
 - **Failure Analysis:** N/A
 - **Lessons Learned:** Default API: `California_Fire_Perimeters_All` on `services1.arcgis.com`. Live download not run in CI (network).
 
+### [Attempt #6: Live CAL FIRE download HTTP 400]
+
+- **Strategy:** Run `python src/data/download_calfire.py` against production API.
+- **Location:** `src/data/download_calfire.py`
+- **Result:** FAILURE → FIXED
+- **Failure Analysis:** `400 Bad Request` — wrong FeatureServer URL (`jUJYIo9rS62FWOcc` / `California_Fire_Perimeters_All`). Correct public endpoint from data.ca.gov: `jUJYIo9tSA7EHvfZ` / `California_Historic_Fire_Perimeters`. `C_METHOD` is integer-coded (1=GPS Ground, 4=Other Imagery), not strings `GPS`/`IMAGERY`.
+- **Lessons Learned:** Use OID pagination (`OBJECTID > last`) for GeoJSON; ~8371 fires for 2000–2024.
+
 ## 3. Blocked Roads & Forbidden Patches
+
+- Do not use old URL `jUJYIo9rS62FWOcc/.../California_Fire_Perimeters_All` (returns 400).
 
 - Do not commit `venv/`, large `data/raw/*.gpkg`, or `.idea/`.
 - Do not use `github-personal` (`id_rsa`) for push — deploy key only.

@@ -25,15 +25,28 @@ class CALFIREDownloader:
     """
     Download and filter California fire perimeter polygons from ArcGIS REST API.
 
-    Default service: CAL FIRE / FRAP California Fire Perimeters (All).
+    Default service: CAL FIRE FRAP California Historic Fire Perimeters (Firep24_1).
+    Source: https://data.ca.gov/dataset/california-fire-perimeters-all
     """
 
     DEFAULT_BASE_URL = (
-        "https://services1.arcgis.com/jUJYIo9rS62FWOcc/arcgis/rest/services/"
-        "California_Fire_Perimeters_All/FeatureServer/0/query"
+        "https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/"
+        "California_Historic_Fire_Perimeters/FeatureServer/0/query"
     )
 
     PAGE_SIZE = 2000
+
+    # FRAP C_METHOD domain (integer codes on the FeatureServer)
+    METHOD_GPS_GROUND = 1
+    METHOD_GPS_AIR = 2
+    METHOD_INFRARED = 3
+    METHOD_OTHER_IMAGERY = 4
+    DEFAULT_QUALITY_METHOD_CODES = [1, 2, 3, 4]
+
+    METHOD_LABEL_TO_CODES: dict[str, list[int]] = {
+        "GPS": [1, 2],
+        "IMAGERY": [3, 4],
+    }
 
     def __init__(
         self,
@@ -67,14 +80,44 @@ class CALFIREDownloader:
     def _build_where_clause(self) -> str:
         return f"YEAR_ >= {self.min_year} AND YEAR_ <= {self.max_year}"
 
-    def _fetch_page(self, where: str, offset: int) -> gpd.GeoDataFrame:
+    def _resolve_method_codes(
+        self,
+        required_methods: Optional[list[str | int]],
+    ) -> list[int]:
+        """Map labels (GPS, IMAGERY) or integer codes to FRAP C_METHOD values."""
+        if required_methods is None:
+            return self.DEFAULT_QUALITY_METHOD_CODES.copy()
+
+        codes: list[int] = []
+        for method in required_methods:
+            if isinstance(method, int):
+                codes.append(method)
+                continue
+
+            label = str(method).upper()
+            if label in self.METHOD_LABEL_TO_CODES:
+                codes.extend(self.METHOD_LABEL_TO_CODES[label])
+            elif label.isdigit():
+                codes.append(int(label))
+
+        return codes or self.DEFAULT_QUALITY_METHOD_CODES.copy()
+
+    def _fetch_page(self, where: str, last_object_id: int = 0) -> gpd.GeoDataFrame:
+        """
+        Fetch one page ordered by OBJECTID (ArcGIS caps GeoJSON at 2000 features).
+        """
+        page_where = (
+            f"({where}) AND OBJECTID > {last_object_id}"
+            if last_object_id
+            else where
+        )
         params = {
-            "where": where,
+            "where": page_where,
             "outFields": "*",
             "f": "geojson",
             "returnGeometry": "true",
             "outSR": "4326",
-            "resultOffset": offset,
+            "orderByFields": "OBJECTID",
             "resultRecordCount": self.PAGE_SIZE,
         }
 
@@ -82,7 +125,7 @@ class CALFIREDownloader:
         response.raise_for_status()
 
         payload = response.text.strip()
-        if not payload or payload == '{"type":"FeatureCollection","features":[]}':
+        if not payload or '"features":[]' in payload.replace(" ", ""):
             return gpd.GeoDataFrame()
 
         return gpd.read_file(StringIO(payload))
@@ -108,19 +151,28 @@ class CALFIREDownloader:
         logger.info("Downloading CAL FIRE perimeters (%s)...", where)
 
         frames: list[gpd.GeoDataFrame] = []
-        offset = 0
+        last_object_id = 0
 
         while True:
-            batch = self._fetch_page(where, offset)
+            batch = self._fetch_page(where, last_object_id=last_object_id)
             if batch.empty:
                 break
 
             frames.append(batch)
-            logger.info("Fetched %s records (offset %s)", len(batch), offset)
+            logger.info(
+                "Fetched %s records (after OBJECTID %s)",
+                len(batch),
+                last_object_id,
+            )
 
             if len(batch) < self.PAGE_SIZE:
                 break
-            offset += len(batch)
+
+            if "OBJECTID" not in batch.columns:
+                logger.warning("OBJECTID missing; cannot paginate further")
+                break
+
+            last_object_id = int(batch["OBJECTID"].max())
 
         if not frames:
             raise ValueError(
@@ -145,7 +197,7 @@ class CALFIREDownloader:
         fires: gpd.GeoDataFrame,
         min_acres: float = 10.0,
         max_acres: float = 1_000_000.0,
-        required_methods: Optional[list[str]] = None,
+        required_methods: Optional[list[str | int]] = None,
     ) -> gpd.GeoDataFrame:
         """
         Filter fires by size, collection method, and geometry validity.
@@ -154,14 +206,12 @@ class CALFIREDownloader:
             fires: Input fire perimeter GeoDataFrame.
             min_acres: Minimum fire size in acres.
             max_acres: Maximum fire size in acres.
-            required_methods: Collection methods to keep (e.g. GPS, IMAGERY).
+            required_methods: FRAP method codes (1-8) or labels (GPS, IMAGERY).
+                Default keeps GPS + imagery methods (codes 1-4).
 
         Returns:
             Filtered GeoDataFrame.
         """
-        if required_methods is None:
-            required_methods = ["GPS", "IMAGERY"]
-
         n_before = len(fires)
         filtered = fires.copy()
 
@@ -172,7 +222,8 @@ class CALFIREDownloader:
             ]
 
         if "C_METHOD" in filtered.columns:
-            filtered = filtered[filtered["C_METHOD"].isin(required_methods)]
+            method_codes = self._resolve_method_codes(required_methods)
+            filtered = filtered[filtered["C_METHOD"].isin(method_codes)]
 
         if "geometry" in filtered.columns:
             filtered = filtered[filtered.geometry.notna() & filtered.geometry.is_valid]
