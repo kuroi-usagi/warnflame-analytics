@@ -63,6 +63,14 @@ features:
     required_modalities: ['weather', 'terrain', 'spatial']
 
 model:
+  spatial_cv:
+    feature_matrix_path: 'data/processed/feature_matrix.parquet'
+    groups_path: 'models/spatial_groups.npy'
+    results_path: 'models/spatial_cv_results.json'
+    n_spatial_groups: 10
+    min_group_separation_km: 30
+    random_state: 42
+
   random_forest:
     n_estimators: 100
     max_depth: 20

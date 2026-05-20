@@ -159,7 +159,7 @@
 - [x] Chunk 6: `terrain_features.py` on `main` (`d7b0602`)
 - [x] Chunk 7: `spatial_features.py` + `download_roads.py` on `main` (`b143bb2`)
 - [x] Chunk 8: `vegetation_features.py` + `download_sentinel2.py` on `main` (`26edc26`)
-- [x] Chunk 9: `build_features.py` + tests (pending commit + push)
-- [ ] Smoke: `python src/features/build_features.py --limit 10 --skip-pseudo`
-- [ ] Optional: full matrix with pseudo-absences (slow; needs network)
-- [ ] Chunks 10–14: spatial_cv, train, export, viz, docs
+- [x] Chunk 9: `build_features.py` + tests (`ef370cc`)
+- [x] Chunk 10: `spatial_cv.py` — K-means groups, leakage/separation report
+- [ ] Smoke: full `feature_matrix.parquet` + `python src/models/spatial_cv.py`
+- [ ] Chunks 11–14: train, export, viz, docs
