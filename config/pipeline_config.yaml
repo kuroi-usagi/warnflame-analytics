@@ -49,6 +49,19 @@ features:
     slope_method: 'central_differences'
     aspect_method: 'compass'
 
+  build:
+    fires_path: 'data/interim/fires_with_centroids.gpkg'
+    weather_path: 'data/interim/fires_weather_joined.parquet'
+    terrain_path: 'data/interim/fires_terrain_joined.parquet'
+    spatial_path: 'data/interim/fires_spatial_joined.parquet'
+    vegetation_path: 'data/interim/fires_vegetation_joined.parquet'
+    output_path: 'data/processed/feature_matrix.parquet'
+    pseudo_absence_ratio: 1.0
+    min_distance_km: 2.0
+    max_placement_attempts: 500
+    random_state: 42
+    required_modalities: ['weather', 'terrain', 'spatial']
+
 model:
   random_forest:
     n_estimators: 100

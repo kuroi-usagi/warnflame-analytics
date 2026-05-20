@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Commit + push Chunk 8 (`vegetation_features.py`, `download_sentinel2.py`); optional PC composite download + smoke test.
-- **Current System State:** Chunks 0–7 on `main` (`b143bb2`). Chunk 8 implemented locally with fallback when rasters missing.
+- **Current Goal:** Commit + push Chunk 9 (`build_features.py`); smoke test join + optional pseudo-absences.
+- **Current System State:** Chunks 0–8 on `main` (`26edc26`). Chunk 9 implemented locally: feature matrix join + pseudo-absence sampling.
 
 ## 2. Comprehensive Implementation History
 
@@ -118,6 +118,13 @@
 - **Lessons Learned:** Prefer `sjoin_nearest` over midpoint KD-tree for road distance. Download roads once before spatial extract.
 - **Failure Analysis (roads download):** `TIGER2023/PRIMARYROADS/...` returns 404 — correct path is `PRISECROADS` (e.g. `TIGER2024/PRISECROADS/tl_2024_06_prisecroads.zip`).
 
+### [Attempt #15: Chunk 9 build_features]
+
+- **Strategy:** Left-join weather/terrain/spatial/vegetation parquets on `OBJECTID`; label `is_fire=1`; sample pseudo-absences in CA with min distance from fires; extract same features for negatives.
+- **Location:** `src/features/build_features.py`, `config/pipeline_config.yaml`, `tests/test_build_features.py`
+- **Result:** SUCCESS (4 unit tests; smoke `--limit 10 --skip-pseudo` → 10 rows × 52 columns)
+- **Lessons Learned:** Use `--skip-pseudo` for fast join smoke tests; full pseudo run re-calls extractors (slow). Vegetation optional in `required_modalities`.
+
 ### [Attempt #14: Chunk 8 vegetation_features + download_sentinel2]
 
 - **Strategy:** Planetary Computer median NDVI/NDMI composites; sample at centroids; `vegetation_density` for warnflame; fallback defaults when rasters missing; optional `requirements-sentinel2.txt`.
@@ -151,7 +158,8 @@
 - [ ] Full weather run: 3,722 fires with `--resume` (optional, slow)
 - [x] Chunk 6: `terrain_features.py` on `main` (`d7b0602`)
 - [x] Chunk 7: `spatial_features.py` + `download_roads.py` on `main` (`b143bb2`)
-- [x] Chunk 8: `vegetation_features.py` + `download_sentinel2.py` + tests (pending commit + push)
-- [ ] Optional: `pip install -r requirements-sentinel2.txt` then `python src/data/download_sentinel2.py --year 2020`
-- [ ] Smoke: `python src/features/vegetation_features.py --limit 10`
-- [ ] Chunks 9–14: build_features, ML, export, viz, docs
+- [x] Chunk 8: `vegetation_features.py` + `download_sentinel2.py` on `main` (`26edc26`)
+- [x] Chunk 9: `build_features.py` + tests (pending commit + push)
+- [ ] Smoke: `python src/features/build_features.py --limit 10 --skip-pseudo`
+- [ ] Optional: full matrix with pseudo-absences (slow; needs network)
+- [ ] Chunks 10–14: spatial_cv, train, export, viz, docs
