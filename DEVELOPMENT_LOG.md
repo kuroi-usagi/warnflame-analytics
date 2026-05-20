@@ -2,8 +2,8 @@
 
 ## 1. Active Objective & Current State
 
-- **Current Goal:** Commit + push Chunk 7 (`spatial_features.py`, `download_roads.py`); user downloads roads + smoke test.
-- **Current System State:** Chunks 0–6 on `main` (`d7b0602`). Chunk 7 implemented locally: road distance via `gpd.sjoin_nearest`, 25 tests passing.
+- **Current Goal:** Commit + push Chunk 8 (`vegetation_features.py`, `download_sentinel2.py`); optional PC composite download + smoke test.
+- **Current System State:** Chunks 0–7 on `main` (`b143bb2`). Chunk 8 implemented locally with fallback when rasters missing.
 
 ## 2. Comprehensive Implementation History
 
@@ -118,6 +118,13 @@
 - **Lessons Learned:** Prefer `sjoin_nearest` over midpoint KD-tree for road distance. Download roads once before spatial extract.
 - **Failure Analysis (roads download):** `TIGER2023/PRIMARYROADS/...` returns 404 — correct path is `PRISECROADS` (e.g. `TIGER2024/PRISECROADS/tl_2024_06_prisecroads.zip`).
 
+### [Attempt #14: Chunk 8 vegetation_features + download_sentinel2]
+
+- **Strategy:** Planetary Computer median NDVI/NDMI composites; sample at centroids; `vegetation_density` for warnflame; fallback defaults when rasters missing; optional `requirements-sentinel2.txt`.
+- **Location:** `src/data/download_sentinel2.py`, `src/features/vegetation_features.py`, tests, config
+- **Result:** SUCCESS (unit tests with mock rasters)
+- **Lessons Learned:** Full CA composite at 100 m is large — run download once; smoke test works with `--limit 10` + fallback until rasters exist.
+
 ## 3. Blocked Roads & Forbidden Patches
 
 - Do not implement multiple chunks in one session without per-chunk commits.
@@ -143,8 +150,8 @@
 - [x] Commit + push Chunk 5 fixes (`1caaf6f`)
 - [ ] Full weather run: 3,722 fires with `--resume` (optional, slow)
 - [x] Chunk 6: `terrain_features.py` on `main` (`d7b0602`)
-- [x] Chunk 7: `spatial_features.py` + `download_roads.py` + tests (pending commit + push)
-- [ ] Download roads: `python src/data/download_roads.py`
-- [ ] Smoke: `python src/features/spatial_features.py --limit 10`
-- [ ] Chunk 8: Sentinel-2 vegetation
+- [x] Chunk 7: `spatial_features.py` + `download_roads.py` on `main` (`b143bb2`)
+- [x] Chunk 8: `vegetation_features.py` + `download_sentinel2.py` + tests (pending commit + push)
+- [ ] Optional: `pip install -r requirements-sentinel2.txt` then `python src/data/download_sentinel2.py --year 2020`
+- [ ] Smoke: `python src/features/vegetation_features.py --limit 10`
 - [ ] Chunks 9–14: build_features, ML, export, viz, docs

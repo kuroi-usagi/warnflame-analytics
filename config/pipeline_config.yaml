@@ -23,9 +23,18 @@ data:
     crs: 'EPSG:5070'
 
   sentinel2:
-    enabled: false
+    enabled: true
     cloud_threshold: 20
-    resolution: 30
+    resolution: 250
+    max_scenes: 40
+    batch_size: 10
+    stack_epsg: 5070
+    scene_selection: spatial
+    composite_months: [6, 7, 8, 9]
+    point_fallback_on_miss: true
+    point_max_scenes: 8
+    ndvi_path: 'cache/sentinel2_ndvi_ca.tif'
+    ndmi_path: 'cache/sentinel2_ndmi_ca.tif'
 
 features:
   spatial:

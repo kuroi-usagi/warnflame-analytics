@@ -1,0 +1,5 @@
+# Optional dependencies for Chunk 8 (Sentinel-2 via Microsoft Planetary Computer)
+# pip install -r requirements-sentinel2.txt
+planetary-computer>=1.0.0
+pystac-client>=0.7.0
+stackstac>=0.5.0
