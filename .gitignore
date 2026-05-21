@@ -25,9 +25,12 @@ cache/
 *.duckdb
 logs/
 
-# Models & reports (regenerated; optional: track only risk_weights.json later)
+# Models (regenerated; risk_weights.json and reports/figures are tracked)
 models/*.pkl
-reports/figures/
+models/*.joblib
+models/spatial_groups.npy
+models/training_metrics.json
+models/spatial_cv_results.json
 
 # Secrets
 .env

@@ -30,7 +30,9 @@ Geospatial ML pipeline that:
 | 9 | `src/models/spatial_cv.py` | K-means blocks + GroupKFold |
 | 10 | `src/models/train_model.py` | Random Forest training |
 | 11 | `src/models/export_weights.py` | `risk_weights.json` export |
-| 12 | `src/visualization/shap_plots.py` | SHAP explainability |
+| 12 | `src/visualization/performance_plots.py` | CV and weights figures |
+| 13 | `src/visualization/shap_plots.py` | SHAP explainability |
+| 14 | `scripts/run_full_pipeline.sh` | End-to-end runner |
 
 ## Integration contract
 

@@ -14,7 +14,18 @@ Early development — see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) for current w
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+export PYTHONPATH="${PWD}:${PYTHONPATH}"
 ```
+
+### Full pipeline (reuse cached features)
+
+```bash
+chmod +x scripts/run_full_pipeline.sh
+SKIP_DOWNLOAD=1 SKIP_WEATHER=1 SKIP_TERRAIN=1 SKIP_VEGETATION=1 \
+BUILD_SKIP_PSEUDO=1 TRAIN_SYNTHETIC=1 ./scripts/run_full_pipeline.sh
+```
+
+See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) and [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 ## Repository layout
 
