@@ -220,6 +220,8 @@ class TerrainFeatureExtractor:
                 if attempt < max_retries - 1:
                     time.sleep(wait_time)
 
+        # Brief pause after exhausting retries (USGS often rate-limits / 502s)
+        time.sleep(1.0)
         return _terrain_feature_dict(float("nan"), float("nan"), float("nan"))
 
     def sample_terrain_at_point(self, lon: float, lat: float) -> dict[str, float]:
@@ -244,8 +246,14 @@ class TerrainFeatureExtractor:
         if resume_path and resume_path.is_file():
             existing = pd.read_parquet(resume_path)
             for _, row in existing.iterrows():
-                completed[int(row["OBJECTID"])] = row.to_dict()
-            logger.info("Resuming terrain from %s (%s records)", resume_path, len(completed))
+                elev = row.get("elevation_meters", np.nan)
+                if np.isfinite(elev):
+                    completed[int(row["OBJECTID"])] = row.to_dict()
+            logger.info(
+                "Resuming terrain from %s (%s successful records)",
+                resume_path,
+                len(completed),
+            )
 
         records: list[dict[str, Any]] = []
 
@@ -267,7 +275,17 @@ class TerrainFeatureExtractor:
             feats = self.sample_terrain_at_point(float(lon), float(lat))
             feats["OBJECTID"] = object_id
             records.append(feats)
-            completed[object_id] = feats
+            if np.isfinite(feats.get("elevation_meters", np.nan)):
+                completed[object_id] = feats
+                if self.mode == "patch":
+                    time.sleep(0.25)
+            else:
+                logger.warning(
+                    "No 3DEP data for OBJECTID %s at (%.4f, %.4f) — will retry on resume",
+                    object_id,
+                    lon,
+                    lat,
+                )
 
             if resume_path and (idx + 1) % batch_size == 0:
                 pd.DataFrame(records).to_parquet(resume_path, index=False)
